@@ -18,19 +18,23 @@ This is a simple expense analyzer for First Abu Dhabi Banks statements.
 
 You can download statements for multiple cards if you want
 
-### 3. Store it in _Fab_Expense_Analyzer/source_data_ folder
+### 3. Create folder _Fab_Expense_Analyzer/source_data_ folder and store your downloaded csv files there
 
-### 4. Define your mapping
+### 4. Install dependencies
+
+```pip install requirements.txt```
+
+### 5. Define your mapping
 
 open _categories.py_ in your favorite editor and define your mapping using regex
 
-### 5. Run the script
+### 6. Run the script
 
 Open command line in Fab_Expense_Analyzer and run the script
 
 ```python main.py```
 
-### Get result in _output_ folder with the following files:
+### 7. Get result in _output_ folder with the following files:
 
 1. <source_file_name> - proper csv with categories as it should come from FAB itself
 2. <source_file_name>_grouped.csv - grouped by category sums of Debit Amounts
@@ -39,4 +43,3 @@ Open command line in Fab_Expense_Analyzer and run the script
 # Prerequisites
 
 * Python 3.10
-* Dependencies installed using ```pip install requirements.txt```
