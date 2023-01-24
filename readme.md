@@ -8,19 +8,23 @@ This is a simple expense analyzer for First Abu Dhabi Banks statements.
 
 # Usage
 
-### 1. Download transactions from FAB online banking
+### 1. Download repo
+
+```git clone https://github.com/ppokrovskii/Fab_Expense_Analyzer```
+
+### 2. Download transactions from FAB online banking
 
 *Credit Cards -> Select your card -> Filter transactions -> Download Transactions -> Download as CSV*
 
 You can download statements for multiple cards if you want
 
-### 2. Store it in _Fab_Expense_Analyzer/source_data_ folder
+### 3. Store it in _Fab_Expense_Analyzer/source_data_ folder
 
-### 3. Define your mapping
+### 4. Define your mapping
 
 open _categories.py_ in your favorite editor and define your mapping using regex
 
-### 4. Run the script
+### 5. Run the script
 
 Open command line in Fab_Expense_Analyzer and run the script
 
