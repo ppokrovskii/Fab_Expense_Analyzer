@@ -22,6 +22,28 @@ output_dir = base_dir / 'output'
 output_dir.mkdir(parents=True, exist_ok=True)
 
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
+def df_to_csv(df_to_store, file, index=True):
+    # store grouped_df to csv file
+
+    try:
+        df_to_store.to_csv(file, index=index)
+    except PermissionError:
+        print(f'{bcolors.FAIL}PermissionError: Please close {file.name} file{bcolors.ENDC}')
+        exit(1)
+
+
 # function that cleans up csv file: remove lines that start with empty values
 # and remove lines that have only one value
 def clean_csv(filename):
@@ -53,6 +75,9 @@ def clean_csv(filename):
 
 
 def add_categories(dataframe):
+    # categories to lowercase for case-insensitive comparison
+    global categories
+    categories = {key.lower(): value for key, value in categories.items()}
     # add column 'category' to dataframe
     dataframe['category'] = dataframe['Description'].str.lower().replace(categories, regex=True)
     # tag equal description replace tag with 'Other'
@@ -62,31 +87,12 @@ def add_categories(dataframe):
     return dataframe
 
 
-# main
-total_df = pd.DataFrame()
-
-
 def group_df(df):
     # created grouped_df with sums of Debit Amount by category
     grouped_df = df.groupby('category')['Debit Amount'].sum()
     # sort grouped_df by Debit Amount
     grouped_df = grouped_df.sort_values(ascending=False)
     return grouped_df
-
-
-for source_file in source_data_dir.iterdir():
-    target_file = output_dir / source_file.name
-    clean_csv(source_file)
-    # read csv to dataframe
-    df = pd.read_csv(target_file)
-    df = add_categories(df)
-    print(df.head())
-    df.to_csv(output_dir / target_file.name, index=False)
-    # add dataframe to total_df using concat
-    total_df = pd.concat([total_df, df])
-    grouped_df = group_df(df)
-    # store grouped_df to csv file
-    grouped_df.to_csv(output_dir / source_file.name.lower().replace('.csv', '_grouped.csv'))
 
 
 # function that splits grouped_df by month and store them into split_by_month directory.
@@ -98,7 +104,11 @@ def split_df_by_month(df):
     # delete all files in split_by_month directory
     split_by_month_dir.mkdir(parents=True, exist_ok=True)
     for file in split_by_month_dir.iterdir():
-        file.unlink()
+        try:
+            file.unlink()
+        except PermissionError:
+            print(f'{bcolors.FAIL}PermissionError: Please close {file.name} file{bcolors.ENDC}')
+            exit(1)
     # create dataframe with month and year
     df['date'] = pd.to_datetime(df['Posting Date'], format='%d/%m/%Y')
     # loop through dataframe and split by month
@@ -110,14 +120,35 @@ def split_df_by_month(df):
         month_df = df[(df['date'] >= start_date) & (df['date'] < next_month_start)]
         # group month_df by category and sum Debit Amount
         grouped_df = group_df(month_df)
-        grouped_df.to_csv(split_by_month_dir / f'{start_date.year}_{start_date.month}_{first_day_of_month}+.csv')
+        df_to_csv(grouped_df, split_by_month_dir / f'{start_date.year}_{start_date.month}_{first_day_of_month}+.csv')
         start_date = next_month_start
         next_month_start = next_month_start + relativedelta(months=1)
 
 
-# split grouped_df by month
-if split_by_month:
-    split_df_by_month(total_df)
-grouped_df = group_df(total_df)
-# store grouped_df to csv file
-grouped_df.to_csv(output_dir / 'total_grouped.csv')
+# main
+if __name__ == '__main__':
+    total_df = pd.DataFrame()
+    # iterate over files in source_data_dir
+    for source_file in source_data_dir.iterdir():
+        target_file = output_dir / source_file.name
+        try:
+            clean_csv(source_file)
+        except PermissionError:
+            print(f'{bcolors.FAIL}PermissionError: Please close {source_file.name} file{bcolors.ENDC}')
+            exit(1)
+        # read csv to dataframe
+        df = pd.read_csv(target_file)
+        df = add_categories(df)
+        print(df.head())
+        df_to_csv(df, output_dir / target_file.name, index=False)
+        # add dataframe to total_df using concat
+        total_df = pd.concat([total_df, df])
+        grouped_df = group_df(df)
+        # store grouped_df to csv file
+        df_to_csv(grouped_df, output_dir / source_file.name.lower().replace('.csv', '_grouped.csv'))
+    # split grouped_df by month
+    if split_by_month:
+        split_df_by_month(total_df)
+    grouped_df = group_df(total_df)
+
+    df_to_csv(grouped_df, output_dir / 'total_grouped.csv')
