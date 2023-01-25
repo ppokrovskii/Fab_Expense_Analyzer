@@ -32,7 +32,11 @@ rename _sample_categories.py_ into _categories.py_ (with underscore), open it an
 
 Open command line in Fab_Expense_Analyzer and run the script
 
-```python main.py```
+```python main.py --first_day_of_month=24```
+_first_day_of_month_ - optional parameter, equals to 1 by default. If you want to group transactions from salary day to
+salary day then pass your salary day
+_split_by_month_ - optional parameter, equals to True by default. pass ```--split_by_month=False``` if you don't want
+the split
 
 ### 7. Get result in _output_ folder with the following files:
 

@@ -1,8 +1,19 @@
+import argparse
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
+from dateutil.relativedelta import relativedelta
 
 from categories import categories
+
+# read args split by month (True/False, default=True)
+parser = argparse.ArgumentParser()
+parser.add_argument('--split_by_month', default=True)
+parser.add_argument('--first_day_of_month', default=1)
+args = parser.parse_args()
+split_by_month = args.split_by_month.lower() == 'true'
+first_day_of_month = int(args.first_day_of_month)
 
 base_dir = Path(__file__).parent
 source_data_dir = base_dir / 'source_data'
@@ -75,6 +86,36 @@ for source_file in source_data_dir.iterdir():
     # store grouped_df to csv file
     grouped_df.to_csv(output_dir / source_file.name.lower().replace('.csv', '_grouped.csv'))
 
+
+# function that splits grouped_df by month and store them into split_by_month directory.
+# function should take day of month as  a parameter and split grouped_df by month
+# and store them into split_by_month directory.
+def split_df_by_month(df):
+    # create split_by_month directory
+    split_by_month_dir = output_dir / 'split_by_month'
+    # delete all files in split_by_month directory
+    split_by_month_dir.mkdir(parents=True, exist_ok=True)
+    for file in split_by_month_dir.iterdir():
+        file.unlink()
+    # create dataframe with month and year
+    df['date'] = pd.to_datetime(df['Posting Date'], format='%d/%m/%Y')
+    # loop through dataframe and split by month
+    start_date = df['date'].min()
+    end_date = df['date'].max()
+    next_month_start = datetime(start_date.year, start_date.month, first_day_of_month) + relativedelta(months=1)
+    while next_month_start < end_date + relativedelta(months=1):
+        # find rows where date is between start_date and next_month_start
+        month_df = df[(df['date'] >= start_date) & (df['date'] < next_month_start)]
+        # group month_df by category and sum Debit Amount
+        grouped_df = group_df(month_df)
+        grouped_df.to_csv(split_by_month_dir / f'{start_date.year}_{start_date.month}_{first_day_of_month}+.csv')
+        start_date = next_month_start
+        next_month_start = next_month_start + relativedelta(months=1)
+
+
+# split grouped_df by month
+if split_by_month:
+    split_df_by_month(total_df)
 grouped_df = group_df(total_df)
 # store grouped_df to csv file
 grouped_df.to_csv(output_dir / 'total_grouped.csv')
