@@ -54,9 +54,11 @@ def clean_csv(filename):
 
 def add_categories(dataframe):
     # add column 'category' to dataframe
-    dataframe['category'] = dataframe['Description'].replace(categories, regex=True)
+    dataframe['category'] = dataframe['Description'].str.lower().replace(categories, regex=True)
     # tag equal description replace tag with 'Other'
-    dataframe['category'] = dataframe['category'].where(~(dataframe['category'] == dataframe['Description']), 'Other')
+    dataframe['category'] = dataframe['category'].where(
+        ~(dataframe['category'] == dataframe['Description'].str.lower()), 'Other')
+    dataframe['category'] = dataframe['category'].str.capitalize()
     return dataframe
 
 
