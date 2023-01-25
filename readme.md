@@ -24,9 +24,9 @@ You can download statements for multiple cards if you want
 
 ```pip install requirements.txt```
 
-### 5. Define your mapping
+### 5. Define your categories
 
-open _categories.py_ in your favorite editor and define your mapping using regex
+rename _sample_categories.py_ into _categories.py_ (with underscore), open it and define your mapping using regex
 
 ### 6. Run the script
 
