@@ -5,7 +5,28 @@ from pathlib import Path
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 
-from categories import categories
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
+try:
+    from categories import categories
+except ModuleNotFoundError:
+    # check if sample_categories.py exists
+    if Path('sample_categories.py').exists():
+        print(f'{bcolors.FAIL}Please rename sample_categories.py to categories.py{bcolors.ENDC}')
+    else:
+        print(f'{bcolors.FAIL}Please create categories.py file with categories dictionary{bcolors.ENDC}')
+    exit(1)
 
 # read args split by month (True/False, default=True)
 parser = argparse.ArgumentParser()
@@ -20,18 +41,6 @@ source_data_dir = base_dir / 'source_data'
 output_dir = base_dir / 'output'
 # create output dir if it does not exist
 output_dir.mkdir(parents=True, exist_ok=True)
-
-
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
 
 
 def df_to_csv(df_to_store, file, index=True):
