@@ -1,6 +1,6 @@
 # Fab Expense Analyzer
 
-This is a simple expense analyzer for First Abu Dhabi Banks statements.
+This is a simple expense analyzer for First Abu Dhabi Bank statements.
 
 1. Download your transactions history
 2. Define your mapping of merchant names to categories
