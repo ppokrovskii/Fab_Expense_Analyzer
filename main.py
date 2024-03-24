@@ -30,7 +30,7 @@ except ModuleNotFoundError:
 
 # read args split by month (True/False, default=True)
 parser = argparse.ArgumentParser()
-parser.add_argument('--split_by_month', default=True)
+parser.add_argument('--split_by_month', default='True')
 parser.add_argument('--first_day_of_month', default=1)
 args = parser.parse_args()
 split_by_month = args.split_by_month.lower() == 'true'
@@ -62,6 +62,9 @@ def clean_csv(filename):
     result_file = output_dir / Path(filename).name
     with open(result_file, 'w') as f:
         for line in lines:
+            # delete first 7 lines
+            if lines.index(line) < 7:
+                continue
             if line.startswith(','):
                 continue
             if line.count(',') == 0:
@@ -119,7 +122,8 @@ def split_df_by_month(df):
             print(f'{bcolors.FAIL}PermissionError: Please close {file.name} file{bcolors.ENDC}')
             exit(1)
     # create dataframe with month and year
-    df['date'] = pd.to_datetime(df['Posting Date'], format='%d/%m/%Y')
+    # parse date from formar 23/03/2024 but trim first
+    df['date'] = pd.to_datetime(df['Posting Date'].str[1:], format='%d/%m/%Y')
     # loop through dataframe and split by month
     start_date = df['date'].min()
     end_date = df['date'].max()
