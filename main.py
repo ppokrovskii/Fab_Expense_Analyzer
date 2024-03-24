@@ -1,9 +1,36 @@
 import argparse
+import logging
+import re
 from datetime import datetime
 from pathlib import Path
+import csv
 
 import pandas as pd
 from dateutil.relativedelta import relativedelta
+
+
+class Record:
+    # Posting Date,Value date,Description,Debit Amount,Credit Amount,category
+    def __init__(self, posting_date, value_date, description, debit_amount, credit_amount):
+        # convert posting date from format 23/03/2024 to datetime but remove spaces from start and end
+        self.posting_date = datetime.strptime(posting_date.strip(), '%d/%m/%Y')
+
+        # convert value date from format 23/03/2024 to datetime
+        self.value_date = datetime.strptime(value_date.strip(), '%d/%m/%Y')
+        self.description = description
+        # convert debit amount from format 79.00 to float or 0.0 if empty
+        self.debit_amount = float(debit_amount.replace(',', '')) if debit_amount else 0.0
+        # convert credit amount from format 79.00 to float or 0.0 if empty
+        self.credit_amount = float(credit_amount.replace(',', '')) if credit_amount else 0.0
+
+        # _categories = {key.lower(): value for key, value in categories.items()}
+        # serch for category in categories when categories is a dict where key is a regex pattern and value is a category
+        self.category = next(
+            (value for key, value in categories.items() if re.search(key, self.description, re.IGNORECASE)), 'Other')
+
+    def __str__(self):
+        # format dates to DATE ISO format
+        return f'{self.posting_date.date()},{self.value_date.date()},{self.description},{self.debit_amount},{self.credit_amount},{self.category}'
 
 
 class bcolors:
@@ -56,34 +83,47 @@ def df_to_csv(df_to_store, file, index=True):
 # function that cleans up csv file: remove lines that start with empty values
 # and remove lines that have only one value
 def clean_csv(filename):
-    skip_header = True
-    with open(filename, 'r') as f:
-        lines = f.readlines()
+    lines_to_skip = 8
     result_file = output_dir / Path(filename).name
-    with open(result_file, 'w') as f:
-        for line in lines:
-            # delete first 7 lines
-            if lines.index(line) < 7:
-                continue
-            if line.startswith(','):
-                continue
-            if line.count(',') == 0:
-                continue
-            if line.startswith('Posting'):
-                if skip_header:
-                    skip_header = False
-                else:
+    with open(result_file, 'w') as result_f:
+        # write header
+        result_f.write('Posting Date,Value date,Description,Debit Amount,Credit Amount,Category\n')
+        with open(filename, 'r') as source_f:
+            csvreader = csv.reader(source_f)
+            for line in csvreader:
+                if lines_to_skip > 0:
+                    lines_to_skip -= 1
                     continue
-            if line.find(',,') <= 12:
-                for i in range(2):
-                    line = line.replace(',,', ',')
-            else:
-                line = line.replace(',,', ',')
-            # trim commas at the end and add new line character
-            line = line.rstrip().rstrip(',') + '\n'
-            #
-            # line = line.replace(',,,', ',')
-            f.write(line)
+                try:
+                    r = Record(*line)
+                except ValueError:
+                    logging.warning(f'Error parsing line: {line}')
+                    continue
+                result_f.write(f'{r}\n')
+    # with open(result_file, 'w') as source_f:
+    #     for line in lines:
+    #         # delete first 7 lines
+    #         if lines.index(line) < 7:
+    #             continue
+    #         if line.startswith(','):
+    #             continue
+    #         if line.count(',') == 0:
+    #             continue
+    #         if line.startswith('Posting'):
+    #             if skip_header:
+    #                 skip_header = False
+    #             else:
+    #                 continue
+    #         if line.find(',,') <= 12:
+    #             for i in range(2):
+    #                 line = line.replace(',,', ',')
+    #         else:
+    #             line = line.replace(',,', ',')
+    #         # trim commas at the end and add new line character
+    #         line = line.rstrip().rstrip(',') + '\n'
+    #         #
+    #         # line = line.replace(',,,', ',')
+    #         source_f.write(line)
 
 
 def add_categories(dataframe):
@@ -100,6 +140,9 @@ def add_categories(dataframe):
 
 
 def group_df(df):
+    # convert Debit Amount to float using .loc
+    # df.loc[:, 'Debit Amount'] = df['Debit Amount'].astype(float)
+
     # created grouped_df with sums of Debit Amount by category
     grouped_df = df.groupby('category')['Debit Amount'].sum()
     # sort grouped_df by Debit Amount
@@ -123,7 +166,7 @@ def split_df_by_month(df):
             exit(1)
     # create dataframe with month and year
     # parse date from formar 23/03/2024 but trim first
-    df['date'] = pd.to_datetime(df['Posting Date'].str[1:], format='%d/%m/%Y')
+    df['date'] = pd.to_datetime(df['Posting Date'], format='%Y-%m-%d')
     # loop through dataframe and split by month
     start_date = df['date'].min()
     end_date = df['date'].max()
