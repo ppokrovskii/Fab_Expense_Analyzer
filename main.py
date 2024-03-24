@@ -100,43 +100,19 @@ def clean_csv(filename):
                     logging.warning(f'Error parsing line: {line}')
                     continue
                 result_f.write(f'{r}\n')
-    # with open(result_file, 'w') as source_f:
-    #     for line in lines:
-    #         # delete first 7 lines
-    #         if lines.index(line) < 7:
-    #             continue
-    #         if line.startswith(','):
-    #             continue
-    #         if line.count(',') == 0:
-    #             continue
-    #         if line.startswith('Posting'):
-    #             if skip_header:
-    #                 skip_header = False
-    #             else:
-    #                 continue
-    #         if line.find(',,') <= 12:
-    #             for i in range(2):
-    #                 line = line.replace(',,', ',')
-    #         else:
-    #             line = line.replace(',,', ',')
-    #         # trim commas at the end and add new line character
-    #         line = line.rstrip().rstrip(',') + '\n'
-    #         #
-    #         # line = line.replace(',,,', ',')
-    #         source_f.write(line)
 
 
-def add_categories(dataframe):
-    # categories to lowercase for case-insensitive comparison
-    global categories
-    categories = {key.lower(): value for key, value in categories.items()}
-    # add column 'category' to dataframe
-    dataframe['category'] = dataframe['Description'].str.lower().replace(categories, regex=True)
-    # tag equal description replace tag with 'Other'
-    dataframe['category'] = dataframe['category'].where(
-        ~(dataframe['category'] == dataframe['Description'].str.lower()), 'Other')
-    dataframe['category'] = dataframe['category'].str.capitalize()
-    return dataframe
+# def add_categories(dataframe):
+#     # categories to lowercase for case-insensitive comparison
+#     global categories
+#     categories = {key.lower(): value for key, value in categories.items()}
+#     # add column 'category' to dataframe
+#     dataframe['category'] = dataframe['Description'].str.lower().replace(categories, regex=True)
+#     # tag equal description replace tag with 'Other'
+#     dataframe['category'] = dataframe['category'].where(
+#         ~(dataframe['category'] == dataframe['Description'].str.lower()), 'Other')
+#     dataframe['category'] = dataframe['category'].str.capitalize()
+#     return dataframe
 
 
 def group_df(df):
@@ -144,7 +120,7 @@ def group_df(df):
     # df.loc[:, 'Debit Amount'] = df['Debit Amount'].astype(float)
 
     # created grouped_df with sums of Debit Amount by category
-    grouped_df = df.groupby('category')['Debit Amount'].sum()
+    grouped_df = df.groupby('Category')['Debit Amount'].sum()
     # sort grouped_df by Debit Amount
     grouped_df = grouped_df.sort_values(ascending=False)
     return grouped_df
@@ -194,7 +170,7 @@ if __name__ == '__main__':
             exit(1)
         # read csv to dataframe
         df = pd.read_csv(target_file)
-        df = add_categories(df)
+        # df = add_categories(df)
         print(df.head())
         df_to_csv(df, output_dir / target_file.name, index=False)
         # add dataframe to total_df using concat
